@@ -48,18 +48,45 @@
     else if (op == '<') return sensorVal < val;
     else if (op == '=') return sensorVal == val;
   };
+  
+  
+  ext.IO_digi_out  = function(name, hl_str) {
+    var channel_id = CHANNELS.indexOf(name);
+    var hl = (hl_str=='HIGH')?"H":"L";
+    if (device){
+	  console.log("digi out");	
+      var bytes = new Uint8Array(16);
+	  bytes[0]=1;
+      bytes[1]=hl.charCodeAt(0);
+      bytes[2]=channel_id+"0".charCodeAt(0);
+      var ret_len = device.write(bytes.buffer);
+	  console.log(ret_len);
+    }
+  };
+  
+  
+  
+  
+  
+  
+  
 
   ext._deviceConnected = function(dev) {
+  
+	//console.log("dev conn");
+  
     if(device) return;
-    if(dev.info['interface_number'] != 2) return;
+    //if(dev.info['interface_number'] != 1) return;
     device = dev;
     device.open();
-    device.write(ab.buffer);
+    //device.write(ab.buffer);
 
     poller = setInterval(function() {
       var input_raw = device.read(16);
-      input = new Uint8Array(input_raw);
-      device.write(ab.buffer);
+	  if (input_raw){
+		input = new Uint8Array(input_raw);
+	  }
+      //device.write(ab.buffer);
     }, 20);
     //setInterval(function() { console.log(input); }, 100);
   };
@@ -85,15 +112,18 @@
 
   var descriptor = {
     blocks: [
+	  [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0','HIGH'],
+	
       ['r', 'get Make!Sense %m.channels', 'readMakeSense', 'Channel0'],
       ['h', 'when Make!Sense %m.channels %m.ops %n', 'whenMakeSense', 'Channel0', '>', 100]
     ],
     menus: {
       channels: CHANNELS,
+	  digi_hl: ['HIGH','low'],
       ops: ['<', '=', '>']
     }
   };
 
-  ScratchExtensions.register('Make!Sense', descriptor, ext, MAKESENSE);
+  ScratchExtensions.register('IO board', descriptor, ext, MAKESENSE);
 
 })({});
