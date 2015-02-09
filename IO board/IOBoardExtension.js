@@ -41,10 +41,6 @@
     poller = null;
   }
 
-  ext.readMakeSense = function(name) {
-    return input[CHANNELS.indexOf(name) + 2];
-  };
-
   ext.whenMakeSense = function(name, op, val) {
     var sensorVal = input[CHANNELS.indexOf(name) + 2];
     if (op == '>') return sensorVal > val
@@ -81,6 +77,14 @@
     return digital_input[channel_id];
   };
 
+  ext.readIOanal = function(name) {
+    var channel_id = CHANNELS.indexOf(name);
+    if (pinmode[channel_id] != 2) {
+      pinmode[channel_id] = 2;
+    }
+    return analog_input[channel_id];
+  };
+
 
   ext._deviceConnected = function(dev) {
 
@@ -103,8 +107,12 @@
             for (var i = 0; i < 8; i++) {
               digital_input[i] = ((hex_value & (1 << i)) != 0);
             }
+          } else if (input_arr[1] == 73) {
+            var channel_id = parseInt(String.fromCharCode(input_arr[2]), 16);
+            var hex_value = parseInt(String.fromCharCode(input_arr[3], input_arr[4]), 16);
+            analog_input[channel_id] = hex_value;
           } else {
-            console.log(input_raw.length + " " + input_raw[0]);
+            console.log("unknown response");
             console.log(new Uint8Array(input_raw));
           }
 
@@ -117,8 +125,12 @@
         if (poll_phase > 8) poll_phase = 0;
       } while ((poll_phase <= 7 && pinmode[poll_phase] != 2));
       if (poll_phase <= 7) {
-
-
+        var bytes = new Uint8Array(16);
+        bytes[0] = 1;
+        bytes[1] = "I".charCodeAt(0);
+        bytes[2] = poll_phase + "0".charCodeAt(0);
+        var ret_len = device.write(bytes.buffer);
+        poll_needed += 1;
       } else if (poll_phase == 8) {
         var bytes = new Uint8Array(16);
         bytes[0] = 1;
@@ -162,7 +174,7 @@
     blocks: [
       [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0', 'HIGH'],
       ['b', 'IO %m.channels is digital HIGH', 'readIOdigi', 'Channel0'],
-      ['r', 'get Make!Sense %m.channels', 'readMakeSense', 'Channel0'],
+      ['r', 'get analog on %m.channels', 'readIOanal', 'Channel0'],
       ['h', 'when Make!Sense %m.channels %m.ops %n', 'whenMakeSense', 'Channel0', '>', 100]
     ],
     menus: {
