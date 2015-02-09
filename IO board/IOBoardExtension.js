@@ -85,10 +85,25 @@
     return analog_input[channel_id];
   };
 
+  ext.IO_anal_out = function(name, value) {
+    var channel_id = CHANNELS.indexOf(name);
+    if (value < 0) value = 0;
+    if (value > 255) value = 255;
+    if (device) {
+      var bytes = new Uint8Array(16);
+      bytes[0] = 1;
+      bytes[1] = 'P'.charCodeAt(0);
+      bytes[2] = channel_id + "0".charCodeAt(0);
+      var value_h = value >> 4;
+      bytes[3] = (value_h < 10) ? (value_h + "0".charCodeAt(0)) : (value_h - 10 + "A".charCodeAt(0));
+      var value_l = value & 0x0f;
+      bytes[4] = (value_l < 10) ? (value_l + "0".charCodeAt(0)) : (value_l - 10 + "A".charCodeAt(0));
+      var ret_len = device.write(bytes.buffer);
+    }
+    pinmode[channel_id] = 3;
+  };
 
   ext._deviceConnected = function(dev) {
-
-
 
     if (device) return;
     //if(dev.info['interface_number'] != 1) return;
@@ -175,10 +190,12 @@
       [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0', 'HIGH'],
       ['b', 'IO %m.channels is digital HIGH', 'readIOdigi', 'Channel0'],
       ['r', 'get analog on %m.channels', 'readIOanal', 'Channel0'],
+      [' ', 'turn %m.a_channels to Digital Out %n', 'IO_anal_out', 'Channel2', '0'],
       ['h', 'when Make!Sense %m.channels %m.ops %n', 'whenMakeSense', 'Channel0', '>', 100]
     ],
     menus: {
       channels: CHANNELS,
+      a_channels: ['Channel2'],
       digi_hl: ['HIGH', 'low'],
       ops: ['<', '=', '>']
     }
