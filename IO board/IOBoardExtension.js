@@ -223,7 +223,7 @@
       [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0', 'HIGH'],
       ['b', 'IO %m.channels is digital HIGH', 'readIOdigi', 'Channel0'],
       ['r', 'get analog on %m.channels', 'readIOanal', 'Channel0'],
-      [' ', 'turn %m.a_channels to Digital Out %n', 'IO_anal_out', 'Channel2', '0'],
+      [' ', 'turn %m.a_channels to Analog Out %n', 'IO_anal_out', 'Channel2', '0'],
       ['h', 'when digital %m.channels is %m.digi_hl', 'whenDigiIn', 'Channel0', 'HIGH'],
       ['h', 'when analog %m.channels %m.ops %n', 'whenAnalIn', 'Channel0', '>', 100],
     ],
