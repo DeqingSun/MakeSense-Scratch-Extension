@@ -23,10 +23,13 @@
   ab[1] = 82;
 
   var device = null;
-  var input = null;
+  var digital_input = [false, false, false, false, false, false, false, false];
+  var analog_input = [0, 0, 0, 0, 0, 0, 0, 0];
+  var pinmode = [0, 0, 0, 0, 0, 0, 0, 0]; //0:di 1:do 2:ai 3:ao
   var poller = null;
   var ext = this;
   var poll_needed = 0;
+  var poll_phase = 8; //0~7 analog, 8 digital
 
   // Converts a byte into a value of the range -1 -> 1 with two decimal places of precision
   function convertByteStr(byte) {
@@ -54,17 +57,29 @@
     var channel_id = CHANNELS.indexOf(name);
     var hl = (hl_str == 'HIGH') ? "H" : "L";
     if (device) {
-      console.log("digi out");
+      //console.log("digi out");
       var bytes = new Uint8Array(16);
       bytes[0] = 1;
       bytes[1] = hl.charCodeAt(0);
       bytes[2] = channel_id + "0".charCodeAt(0);
       var ret_len = device.write(bytes.buffer);
-      console.log(ret_len);
+      //console.log(ret_len);
     }
+    pinmode[channel_id] = 1;
   };
 
-
+  ext.readIOdigi = function(name) {
+    var channel_id = CHANNELS.indexOf(name);
+    if (pinmode[channel_id] != 0) {
+      var bytes = new Uint8Array(16);
+      bytes[0] = 1;
+      bytes[1] = 'l'.charCodeAt(0);
+      bytes[2] = channel_id + "0".charCodeAt(0);
+      var ret_len = device.write(bytes.buffer);
+      pinmode[channel_id] = 0;
+    }
+    return digital_input[channel_id];
+  };
 
 
   ext._deviceConnected = function(dev) {
@@ -82,10 +97,36 @@
       if (poll_needed > 0) {
         var input_raw = device.read(16);
         if (input_raw) {
-          input = new Uint8Array(input_raw);
+          var input_arr = new Uint8Array(input_raw);
+          if (input_arr[1] == 82) {
+            var hex_value = parseInt(String.fromCharCode(input_arr[2], input_arr[3]), 16);
+            for (var i = 0; i < 8; i++) {
+              digital_input[i] = ((hex_value & (1 << i)) != 0);
+            }
+          } else {
+            console.log(input_raw.length + " " + input_raw[0]);
+            console.log(new Uint8Array(input_raw));
+          }
+
+          //input = new Uint8Array(input_raw);
         }
         poll_needed--;
       }
+      do { //poll needed data
+        poll_phase++;
+        if (poll_phase > 8) poll_phase = 0;
+      } while ((poll_phase <= 7 && pinmode[poll_phase] != 2));
+      if (poll_phase <= 7) {
+
+
+      } else if (poll_phase == 8) {
+        var bytes = new Uint8Array(16);
+        bytes[0] = 1;
+        bytes[1] = "R".charCodeAt(0);
+        var ret_len = device.write(bytes.buffer);
+        poll_needed += 1;
+      }
+      //console.log(poll_phase);
       //device.write(ab.buffer);
     }, 20);
     //setInterval(function() { console.log(input); }, 100);
@@ -120,7 +161,7 @@
   var descriptor = {
     blocks: [
       [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0', 'HIGH'],
-
+      ['b', 'IO %m.channels is digital HIGH', 'readIOdigi', 'Channel0'],
       ['r', 'get Make!Sense %m.channels', 'readMakeSense', 'Channel0'],
       ['h', 'when Make!Sense %m.channels %m.ops %n', 'whenMakeSense', 'Channel0', '>', 100]
     ],
