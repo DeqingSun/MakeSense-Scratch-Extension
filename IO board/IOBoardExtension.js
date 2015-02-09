@@ -41,13 +41,17 @@
     poller = null;
   }
 
-  ext.whenMakeSense = function(name, op, val) {
-    var sensorVal = input[CHANNELS.indexOf(name) + 2];
-    if (op == '>') return sensorVal > val
-    else if (op == '<') return sensorVal < val;
-    else if (op == '=') return sensorVal == val;
+  ext.IO_digi_in = function(name) {
+    var channel_id = CHANNELS.indexOf(name);
+    if (device) {
+      var bytes = new Uint8Array(16);
+      bytes[0] = 1;
+      bytes[1] = 'l'.charCodeAt(0);
+      bytes[2] = channel_id + "0".charCodeAt(0);
+      var ret_len = device.write(bytes.buffer);
+    }
+    pinmode[channel_id] = 0;
   };
-
 
   ext.IO_digi_out = function(name, hl_str) {
     var channel_id = CHANNELS.indexOf(name);
@@ -101,6 +105,34 @@
       var ret_len = device.write(bytes.buffer);
     }
     pinmode[channel_id] = 3;
+  };
+
+  ext.whenDigiIn = function(name, val) {
+    //console.log("whenDigiIn");
+    var channel_id = CHANNELS.indexOf(name);
+    if (pinmode[channel_id] != 0) {
+      var bytes = new Uint8Array(16);
+      bytes[0] = 1;
+      bytes[1] = 'l'.charCodeAt(0);
+      bytes[2] = channel_id + "0".charCodeAt(0);
+      var ret_len = device.write(bytes.buffer);
+      pinmode[channel_id] = 0;
+    }
+    if (val == 'HIGH') {
+      return digital_input[channel_id];
+    } else {
+      return !digital_input[channel_id];
+    }
+  }
+
+  ext.whenAnalIn = function(name, op, val) {
+    var channel_id = CHANNELS.indexOf(name);
+    pinmode[channel_id] = 2;
+    var sensorVal = analog_input[channel_id];
+    if (op == '>') return sensorVal > val
+    else if (op == '<') return sensorVal < val;
+    else if (op == '=') return sensorVal == val;
+    return false;
   };
 
   ext._deviceConnected = function(dev) {
@@ -187,11 +219,13 @@
 
   var descriptor = {
     blocks: [
+      [' ', 'turn %m.channels to Digital Input', 'IO_digi_in', 'Channel0'],
       [' ', 'turn %m.channels to Digital Out %m.digi_hl', 'IO_digi_out', 'Channel0', 'HIGH'],
       ['b', 'IO %m.channels is digital HIGH', 'readIOdigi', 'Channel0'],
       ['r', 'get analog on %m.channels', 'readIOanal', 'Channel0'],
       [' ', 'turn %m.a_channels to Digital Out %n', 'IO_anal_out', 'Channel2', '0'],
-      ['h', 'when Make!Sense %m.channels %m.ops %n', 'whenMakeSense', 'Channel0', '>', 100]
+      ['h', 'when digital %m.channels is %m.digi_hl', 'whenDigiIn', 'Channel0', 'HIGH'],
+      ['h', 'when analog %m.channels %m.ops %n', 'whenAnalIn', 'Channel0', '>', 100],
     ],
     menus: {
       channels: CHANNELS,
