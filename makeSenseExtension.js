@@ -75,6 +75,11 @@
     console.log(dev);
     console.log(device);
     
+    if (dev.info["vendor_id"]==1240 && dev.info["product_id"]==62570 ) {
+      device = null;
+      stopPolling();
+    }
+    
     if(device != dev) return;
     device = null;
     stopPolling();
