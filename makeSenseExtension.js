@@ -56,7 +56,7 @@
       if (dev.info["vendor_id"]==1240 && dev.info["product_id"]==62570 && dev.info['interface_number'] == 2) {
         //force reconnect
         device.close();
-        devive==null;
+        device=null;
       }else{
         return;
       }
