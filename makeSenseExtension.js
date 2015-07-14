@@ -78,7 +78,7 @@
     var input_raw = device.read(16);
     if (input_raw!=null) {
       input = new Uint8Array(input_raw);
-      console.log(input);
+      //console.log(input);
     }
     device.write(ab.buffer);
   }
