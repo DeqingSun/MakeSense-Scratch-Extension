@@ -50,6 +50,8 @@
   };
 
   ext._deviceConnected = function(dev) {
+    console.log("ext._deviceConnected");
+    console.log(dev);
     if(device) return;
     if(dev.info['interface_number'] != 2) return;
     device = dev;
@@ -67,6 +69,8 @@
   };
 
   ext._deviceRemoved = function(dev) {
+    console.log("ext._deviceRemoved");
+    console.log(dev);
     if(device != dev) return;
     device = null;
     stopPolling();
