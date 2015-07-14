@@ -49,7 +49,7 @@
     else if (op == '=') return sensorVal == val;
   };
 
-  ext._deviceConnected = function(dev) {
+  ext._deviceConnected = function(dev) {  //if we don't open, this will be called constantly
     console.log("ext._deviceConnected");
     console.log(dev);
     if(device) return;
@@ -73,6 +73,8 @@
   ext._deviceRemoved = function(dev) {
     console.log("ext._deviceRemoved");
     console.log(dev);
+    console.log(device);
+    
     if(device != dev) return;
     device = null;
     stopPolling();
