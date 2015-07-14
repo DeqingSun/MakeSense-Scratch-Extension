@@ -71,9 +71,14 @@
   };
   
   var pollDevice = function(){
+    if (device==null) {
+      stopPolling();
+      return;
+    }
     var input_raw = device.read(16);
     if (input!=null) {
       input = new Uint8Array(input_raw);
+      console.log(input);
     }
     device.write(ab.buffer);
   }
