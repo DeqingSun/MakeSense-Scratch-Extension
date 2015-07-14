@@ -58,7 +58,9 @@
 
     poller = setInterval(function() {
       var input_raw = device.read(16);
-      input = new Uint8Array(input_raw);
+      if (input!=null) {
+        input = new Uint8Array(input_raw);
+      }
       device.write(ab.buffer);
     }, 20);
     //setInterval(function() { console.log(input); }, 100);
