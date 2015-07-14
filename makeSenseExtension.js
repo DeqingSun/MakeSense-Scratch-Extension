@@ -49,22 +49,50 @@
     else if (op == '=') return sensorVal == val;
   };
 
-  ext._deviceConnected = function(dev) {
-    if(device) return;
+  ext._deviceConnected = function(dev) {  //if we don't open, this will be called constantly
+    console.log("ext._deviceConnected");
+    console.log(dev);
+    if(device) {
+      if (dev.info["vendor_id"]==1240 && dev.info["product_id"]==62570 && dev.info['interface_number'] == 2) {
+        //force reconnect
+        device.close();
+        device=null;
+      }else{
+        return;
+      }
+    }
     if(dev.info['interface_number'] != 2) return;
     device = dev;
     device.open();
     device.write(ab.buffer);
 
-    poller = setInterval(function() {
-      var input_raw = device.read(16);
-      input = new Uint8Array(input_raw);
-      device.write(ab.buffer);
-    }, 20);
+    poller = setInterval(pollDevice, 50);
     //setInterval(function() { console.log(input); }, 100);
   };
+  
+  var pollDevice = function(){
+    if (device==null) {
+      stopPolling();
+      return;
+    }
+    var input_raw = device.read(16);
+    if (input_raw!=null) {
+      input = new Uint8Array(input_raw);
+      //console.log(input);
+    }
+    device.write(ab.buffer);
+  }
 
   ext._deviceRemoved = function(dev) {
+    console.log("ext._deviceRemoved");
+    console.log(dev);
+    console.log(device);
+    
+    if (dev.info["vendor_id"]==1240 && dev.info["product_id"]==62570 ) {
+      device = null;
+      stopPolling();
+    }
+    
     if(device != dev) return;
     device = null;
     stopPolling();
