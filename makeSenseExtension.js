@@ -52,7 +52,15 @@
   ext._deviceConnected = function(dev) {  //if we don't open, this will be called constantly
     console.log("ext._deviceConnected");
     console.log(dev);
-    if(device) return;
+    if(device) {
+      if (dev.info["vendor_id"]==1240 && dev.info["product_id"]==62570 && dev.info['interface_number'] == 2) {
+        //force reconnect
+        device.close();
+        devive==null;
+      }else{
+        return;
+      }
+    }
     if(dev.info['interface_number'] != 2) return;
     device = dev;
     device.open();
