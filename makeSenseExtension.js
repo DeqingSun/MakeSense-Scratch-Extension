@@ -58,15 +58,17 @@
     device.open();
     device.write(ab.buffer);
 
-    poller = setInterval(function() {
-      var input_raw = device.read(16);
-      if (input!=null) {
-        input = new Uint8Array(input_raw);
-      }
-      device.write(ab.buffer);
-    }, 20);
+    poller = setInterval(pollDevice, 50);
     //setInterval(function() { console.log(input); }, 100);
   };
+  
+  var pollDevice = function(){
+    var input_raw = device.read(16);
+    if (input!=null) {
+      input = new Uint8Array(input_raw);
+    }
+    device.write(ab.buffer);
+  }
 
   ext._deviceRemoved = function(dev) {
     console.log("ext._deviceRemoved");
